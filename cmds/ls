@@ -10,7 +10,7 @@ for arg in "$@"; do
 done
 
 if [ ! -d "$target_dir" ]; then
-    echo "[Banana Error] Directorio no válido: $target_dir" >&2
+    echo "[Banana Error] Invalid directory: $target_dir" >&2
     exit 1
 fi
 
