@@ -8,7 +8,7 @@ case "$subcmd" in
         if [ -f "$location" ]; then
             cat "$location"
         else
-            echo "[Banana Error] Archivo no encontrado: $location" >&2
+            echo "[Banana Error] File not found: $location" >&2
             exit 1
         fi
         ;;
@@ -18,7 +18,7 @@ case "$subcmd" in
         if [ -f "$location" ]; then
             awk "/func $func_name\s*\{/,/^\}/" "$location"
         else
-            echo "[Banana Error] Archivo de script no encontrado: $location" >&2
+            echo "[Banana Error] Script file not found: $location" >&2
             exit 1
         fi
         ;;
@@ -41,7 +41,7 @@ case "$subcmd" in
         fi
         ;;
     *)
-        echo "[Banana Error] Subcomando de get desconocido: $subcmd" >&2
+        echo "[Banana Error] Unknown get subcommand: $subcmd" >&2
         exit 1
         ;;
 esac
