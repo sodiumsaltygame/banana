@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+flag=""
+target_dir="."
+
+for arg in "$@"; do
+    case "$arg" in
+        -d|-f|-a) flag="$arg" ;;
+        *) target_dir="$arg" ;;
+    esac
+done
+
+if [ ! -d "$target_dir" ]; then
+    echo "[Banana Error] Directorio no válido: $target_dir" >&2
+    exit 1
+fi
+
+case "$flag" in
+    -d)
+        for item in "$target_dir"/*; do
+            [ -d "$item" ] && basename "$item"
+        done
+        ;;
+    -f)
+        for item in "$target_dir"/*; do
+            [ -f "$item" ] && basename "$item"
+        done
+        ;;
+    -a)
+        ls -a "$target_dir"
+        ;;
+    *)
+        ls "$target_dir"
+        ;;
+esac

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+cond_expr="$*"
+clean_cond=$(echo "$cond_expr" | sed -E 's/^\[\s*(.*)\s*\]\s*>.*$/\1/')
+
+# Expandir variables !{var} a sus valores reales antes de evaluar en Bash
+expanded_cond=$(echo "$clean_cond" | sed -E 's/!\{([a-zA-Z0-9_]+)\}/${\1}/g')
+
+if eval "[ $expanded_cond ]"; then
+    exit 0
+else
+    exit 1
+fi

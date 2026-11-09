@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+subcmd="$1"
+shift
+
+case "$subcmd" in
+    txt)
+        location="$1"
+        if [ -f "$location" ]; then
+            cat "$location"
+        else
+            echo "[Banana Error] Archivo no encontrado: $location" >&2
+            exit 1
+        fi
+        ;;
+    func)
+        func_name="$1"
+        location="$2"
+        if [ -f "$location" ]; then
+            awk "/func $func_name\s*\{/,/^\}/" "$location"
+        else
+            echo "[Banana Error] Archivo de script no encontrado: $location" >&2
+            exit 1
+        fi
+        ;;
+    opt)
+        arg_num="$1"
+        shift
+        target_val=""
+        if [ -n "$BANANA_ARGS" ]; then
+            eval "target_val=\${$arg_num}"
+        fi
+        
+        rest="$*"
+        if [[ "$rest" =~ \>\ *\!\{([a-zA-Z0-9_]+)\} ]]; then
+            var_name="${BASH_REMATCH[1]}"
+            if [ -n "$BANANA_ENV_FILE" ]; then
+                echo "export $var_name=\"$target_val\"" >> "$BANANA_ENV_FILE"
+            fi
+        else
+            echo "$target_val"
+        fi
+        ;;
+    *)
+        echo "[Banana Error] Subcomando de get desconocido: $subcmd" >&2
+        exit 1
+        ;;
+esac

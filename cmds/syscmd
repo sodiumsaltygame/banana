@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+flag=""
+content="$*"
+
+if [[ "$1" == "-c" ]]; then
+    flag="-c"
+    shift
+    content="$*"
+fi
+
+clean_content=$(echo "$content" | sed -E 's/^\((.*)\)$/\1/' | sed -E 's/^"(.*)"$/\1/')
+
+if [ "$flag" = "-c" ]; then
+    eval "$clean_content"
+else
+    bash -c "$clean_content"
+fi

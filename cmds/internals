@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+subcmd="$1"
+
+case "$subcmd" in
+    version)
+        echo "BananaShell 1.1 Gemini"
+        ;;
+    bversion)
+        echo "1.0p1 Reality"
+        ;;
+    user)
+        echo "$USER"
+        ;;
+    profiles)
+        cut -d: -f1 /etc/passwd
+        ;;
+    *)
+        echo "[Banana Error] Subcomando de internals desconocido. Usa: version, bversion, user, profiles" >&2
+        exit 1
+        ;;
+esac

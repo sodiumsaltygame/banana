@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+file_path="$1"
+shift
+
+if [ -f "$file_path" ]; then
+    if [[ "$file_path" == *.ban ]]; then
+        banana --exec "$file_path" "$@"
+    else
+        bash "$file_path" "$@"
+    fi
+else
+    echo "[Banana Error] Archivo no encontrado: $file_path" >&2
+    exit 1
+fi

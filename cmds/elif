@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+cond_expr="$*"
+clean_cond=$(echo "$cond_expr" | sed -E 's/^\[\s*(.*)\s*\]\s*>.*$/\1/')
+if eval "[ $clean_cond ]"; then
+    exit 0
+else
+    exit 1
+fi
