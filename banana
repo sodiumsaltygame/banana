@@ -23,13 +23,13 @@ handle_cd() {
             local prev_dir
             prev_dir=$(cat "$cache_file")
             if [ -d "$prev_dir" ]; then
-                cd "$prev_dir" || echo "[Banana Error] No se pudo cambiar a $prev_dir" >&2
+                cd "$prev_dir" || echo "[Banana Error] Changing to the previous directory was not possible: $prev_dir" >&2
                 echo "$current_pwd" > "$cache_file"
             else
-                echo "[Banana Error] El directorio guardado ya no existe: $prev_dir" >&2
+                echo "[Banana Error] The saved directory does no longer exist: $prev_dir" >&2
             fi
         else
-            echo "[Banana Error] No hay ningún directorio previo en la caché." >&2
+            echo "[Banana Error] There is no previous directory in the cache." >&2
         fi
     elif [[ "$target" =~ ^([<]+(/<)*)+$ ]]; then
         local count=$(echo "$target" | grep -o '<' | wc -l)
@@ -38,17 +38,17 @@ handle_cd() {
             cd_path="$cd_path/.."
         done
         echo "$current_pwd" > "$cache_file"
-        cd "$cd_path" || echo "[Banana Error] No se pudo retroceder en los directorios" >&2
+        cd "$cd_path" || echo "[Banana Error] Could not go to the parent directory" >&2
     else
         if [ -z "$target" ]; then
             echo "$current_pwd" > "$cache_file"
-            cd ~ || echo "[Banana Error] No se pudo ir al directorio home" >&2
+            cd ~ || echo "[Banana Error] Could not go to home directory" >&2
         else
             if [ -d "$target" ]; then
                 echo "$current_pwd" > "$cache_file"
-                cd "$target" || echo "[Banana Error] No se pudo cambiar a $target" >&2
+                cd "$target" || echo "[Banana Error] Could not change to $target" >&2
             else
-                echo "[Banana Error] Directorio no encontrado: $target" >&2
+                echo "[Banana Error] No such directory: $target" >&2
             fi
         fi
     fi
@@ -113,7 +113,7 @@ execute_file() {
     set -- "$@"
 
     if [ ! -f "$file_path" ]; then
-        echo "[Banana Error] Archivo no encontrado: $file_path" >&2
+        echo "[Banana Error] File not found: $file_path" >&2
         exit 1
     fi
 
@@ -180,13 +180,13 @@ case "$mode" in
             shift 2
             execute_file "$script_file" "$@"
         else
-            echo "[Banana Error] Falta la ruta del archivo a ejecutar." >&2
+            echo "[Banana Error] The file location to execute is missing." >&2
             exit 1
         fi
         ;;
     *)
         if [[ "$mode" == -* ]]; then
-            echo "[Banana Error] Opcion desconocida: $mode" >&2
+            echo "[Banana Error] Unknown option: $mode" >&2
             exit 1
         else
             script_file="$1"
