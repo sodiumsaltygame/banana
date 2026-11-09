@@ -1,21 +1,16 @@
 #!/usr/bin/env bash
 action="$1"
 shift
-
-# Unir el resto de argumentos por si tienen espacios y limpiar
 assignment="$*"
 
 case "$action" in
     dfcr|create|define)
-        # Limpiar comillas iniciales o espacios extra si los hubiera
         if [[ "$assignment" =~ ^([a-zA-Z0-9_]+)=(.*)$ ]]; then
             var_name="${BASH_REMATCH[1]}"
             var_val="${BASH_REMATCH[2]}"
             
-            # Quitar comillas envolventes del valor si existen
             var_val=$(echo "$var_val" | sed -E 's/^[[:space:]]*["\']?(.*)["\']?[[:space:]]*$/\1/')
             
-            # Expandir variables !{var} si se usan dentro del valor
             expanded_val=$(echo "$var_val" | sed -E 's/!\{([a-zA-Z0-9_]+)\}/${\1}/g')
             final_val=$(eval echo "$expanded_val")
             
@@ -24,7 +19,7 @@ case "$action" in
             fi
             export "$var_name"="$final_val"
         else
-            echo "[Banana Error] Sintaxis de variable inválida. Usa: var dfcr nombre=\"valor\"" >&2
+            echo "[Banana Error] Variable syntax is invalid. Use: var dfcr name=\"valor\"" >&2
             exit 1
         fi
         ;;
@@ -36,7 +31,7 @@ case "$action" in
         fi
         ;;
     *)
-        echo "[Banana Error] Acción de variable desconocida: $action" >&2
+        echo "[Banana Error] Unknown variable action: $action" >&2
         exit 1
         ;;
 esac
