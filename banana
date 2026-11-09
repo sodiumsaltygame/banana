@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+
+BANANA_LIB="/bin/banana"
+BANANA_ENV_FILE=$(mktemp)
+export BANANA_ENV_FILE
+
+cleanup() {
+    rm -f "$BANANA_ENV_FILE"
+}
+trap cleanup EXIT
+
+show_version() {
+    echo "Banana 1.0 \"Reality\""
+}
+
+handle_cd() {
+    local target="$1"
+    local current_pwd="$(pwd)"
+    local cache_file="/tmp/bananashdir.txt"
+
+    if [ "$target" = ">" ]; then
+        if [ -f "$cache_file" ]; then
+            local prev_dir
+            prev_dir=$(cat "$cache_file")
+            if [ -d "$prev_dir" ]; then
+                cd "$prev_dir" || echo "[Banana Error] No se pudo cambiar a $prev_dir" >&2
+                echo "$current_pwd" > "$cache_file"
+            else
+                echo "[Banana Error] El directorio guardado ya no existe: $prev_dir" >&2
+            fi
+        else
+            echo "[Banana Error] No hay ningún directorio previo en la caché." >&2
+        fi
+    elif [[ "$target" =~ ^([<]+(/<)*)+$ ]]; then
+        local count=$(echo "$target" | grep -o '<' | wc -l)
+        local cd_path=".."
+        for ((i=2; i<=count; i++)); do
+            cd_path="$cd_path/.."
+        done
+        echo "$current_pwd" > "$cache_file"
+        cd "$cd_path" || echo "[Banana Error] No se pudo retroceder en los directorios" >&2
+    else
+        if [ -z "$target" ]; then
+            echo "$current_pwd" > "$cache_file"
+            cd ~ || echo "[Banana Error] No se pudo ir al directorio home" >&2
+        else
+            if [ -d "$target" ]; then
+                echo "$current_pwd" > "$cache_file"
+                cd "$target" || echo "[Banana Error] No se pudo cambiar a $target" >&2
+            else
+                echo "[Banana Error] Directorio no encontrado: $target" >&2
+            fi
+        fi
+    fi
+}
+
+run_bshell() {
+    local history_file="/tmp/bananashellhistory.txt"
+    
+    touch "$history_file"
+    history -r "$history_file"
+    trap '' INT
+
+    while true; do
+        if [ "$EUID" -eq 0 ]; then
+            prompt_user="\033[31mroot\033[0m"
+        else
+            prompt_user="\033[33m$USER\033[0m"
+        fi
+        
+        prompt_loc="\033[36m$(pwd)\033[0m"
+        
+        if ! read -e -p "$(echo -en "\033[33mbshell\033[0m![$prompt_user][$prompt_loc]> ")" input_line; then
+            echo ""
+            continue
+        fi
+        
+        if [ "$input_line" = "exit" ] || [ "$input_line" = "quit" ]; then
+            break
+        fi
+        
+        if [ -n "$input_line" ]; then
+            history -s "$input_line"
+            history -w "$history_file"
+
+            if [ -s "$BANANA_ENV_FILE" ]; then
+                source "$BANANA_ENV_FILE"
+            fi
+            
+            cmd_name=$(echo "$input_line" | awk '{print $1}')
+            cmd_args=$(echo "$input_line" | cut -s -d' ' -f2-)
+            
+            if [ "$cmd_name" = "cd" ]; then
+                handle_cd "$cmd_args"
+            elif [ -x "$BANANA_LIB/$cmd_name" ]; then
+                "$BANANA_LIB/$cmd_name" $cmd_args
+            elif [[ "$cmd_name" =~ = ]] || command -v "$cmd_name" &> /dev/null; then
+                eval "$input_line"
+            else
+                echo "[$cmd_name] cmd not found" >&2
+            fi
+        fi
+    done
+    
+    trap - INT
+}
+
+execute_file() {
+    local file_path="$1"
+    shift
+    
+    export BANANA_ARGS="$*"
+    set -- "$@"
+
+    if [ ! -f "$file_path" ]; then
+        echo "[Banana Error] Archivo no encontrado: $file_path" >&2
+        exit 1
+    fi
+
+    local in_func=0
+    local func_name=""
+    local func_body=""
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        stripped_line=$(echo "$line" | xargs)
+        
+        if [ -z "$stripped_line" ] || [[ "$stripped_line" =~ ^# ]]; then
+            continue
+        fi
+
+        if [ "$in_func" -eq 1 ]; then
+            if [ "$stripped_line" = "}" ]; then
+                in_func=0
+                eval "$func_name() { $func_body; }"
+            else
+                func_body="$func_body $stripped_line;"
+            fi
+            continue
+        fi
+
+        if [[ "$stripped_line" =~ ^func\ +([a-zA-Z0-9_]+)\ *\{$ ]]; then
+            func_name="${BASH_REMATCH[1]}"
+            in_func=1
+            func_body=""
+            continue
+        fi
+
+        if [ -s "$BANANA_ENV_FILE" ]; then
+            source "$BANANA_ENV_FILE"
+        fi
+
+        cmd_name=$(echo "$stripped_line" | awk '{print $1}')
+        cmd_args=$(echo "$stripped_line" | cut -s -d' ' -f2-)
+
+        if [ "$cmd_name" = "cd" ]; then
+            handle_cd "$cmd_args"
+        elif [ -x "$BANANA_LIB/$cmd_name" ]; then
+            "$BANANA_LIB/$cmd_name" $cmd_args
+        elif [[ "$cmd_name" =~ = ]] || command -v "$cmd_name" &> /dev/null; then
+            eval "$stripped_line"
+        else
+            echo "[$cmd_name] cmd not found" >&2
+        fi
+
+    done < "$file_path"
+}
+
+mode="${1:---exec}"
+
+case "$mode" in
+    --version|-v)
+        show_version
+        ;;
+    --bshell|-b)
+        run_bshell
+        ;;
+    --exec|-e)
+        if [ -n "$2" ]; then
+            script_file="$2"
+            shift 2
+            execute_file "$script_file" "$@"
+        else
+            echo "[Banana Error] Falta la ruta del archivo a ejecutar." >&2
+            exit 1
+        fi
+        ;;
+    *)
+        if [[ "$mode" == -* ]]; then
+            echo "[Banana Error] Opcion desconocida: $mode" >&2
+            exit 1
+        else
+            script_file="$1"
+            shift
+            execute_file "$script_file" "$@"
+        fi
+        ;;
+esac
