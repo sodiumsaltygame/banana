@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Uso: print -ve ("texto") o print ("texto")
 flag=""
 content="$*"
 
@@ -9,11 +8,9 @@ if [[ "$1" == "-ve" ]]; then
     content="$*"
 fi
 
-# Limpiar paréntesis exteriores si existen
 clean_content=$(echo "$content" | sed -E 's/^\((.*)\)$/\1/' | sed -E 's/^"(.*)"$/\1/')
 
 if [ "$flag" = "-ve" ]; then
-    # Expandir variables estilo !{var} a las variables de entorno reales de Bash
     eval "echo \"$clean_content\"" | sed -E 's/!\{([a-zA-Z0-9_]+)\}/${\1}/g' | xargs echo
 else
     echo "$clean_content"
