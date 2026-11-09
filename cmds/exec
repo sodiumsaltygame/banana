@@ -9,6 +9,6 @@ if [ -f "$file_path" ]; then
         bash "$file_path" "$@"
     fi
 else
-    echo "[Banana Error] Archivo no encontrado: $file_path" >&2
+    echo "[Banana Error] File not found: $file_path" >&2
     exit 1
 fi
