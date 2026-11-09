@@ -15,7 +15,7 @@ case "$subcmd" in
         cut -d: -f1 /etc/passwd
         ;;
     *)
-        echo "[Banana Error] Subcomando de internals desconocido. Usa: version, bversion, user, profiles" >&2
+        echo "[Banana Error] Internals subcommand not found. Use: version, bversion, user, profiles" >&2
         exit 1
         ;;
 esac
